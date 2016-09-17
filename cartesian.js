@@ -15,13 +15,32 @@ function cut(s, predicate) {
     return {__cartesian__: 'cut', s: s, predicate: predicate}
 }
 
-function expand(expr) {
-    function copy(dst, src) {
-        for(var prop in src) {
-            var desc = Object.getOwnPropertyDescriptor(src, prop)
+function wrapper(prop, fn) {
+    var val = fn.call(this)
+    delete this[prop]
+    Object.defineProperty(this, prop, {enumerable: true, value: val})
+    return val
+}
+
+function memoize(dst, prop, fn) {
+    Object.defineProperty(dst, prop, {
+        configurable: true,
+        enumerable: true,
+        get: wrapper.bind(dst, prop, fn)})
+}
+
+function copy(dst, src) {
+    for(var prop in src) {
+        var desc = Object.getOwnPropertyDescriptor(src, prop)
+        if(desc.get === undefined) {
             Object.defineProperty(dst, prop, desc)
+            continue
         }
+        memoize(dst, prop, desc.get)
     }
+}
+
+function expand(expr) {
     // primitive type
     if(typeof(expr) !== 'object') return [expr]
     // mix()
@@ -74,7 +93,7 @@ function expand(expr) {
         var desc = Object.getOwnPropertyDescriptor(expr, name)
         if(desc.get != undefined) {
             for(var i = 0; i < res.length; i++)
-                Object.defineProperty(res[i], name, desc)
+                memoize(res[i], name, desc.get)
             continue;
         }
         var s = expand(expr[name])
@@ -94,13 +113,7 @@ function expand(expr) {
 
 function degetterize(s) {
     if(typeof(s) !== 'object') return
-    for(prop in s) {
-        var desc = Object.getOwnPropertyDescriptor(s, prop);
-        if(desc.get !== undefined)
-            Object.defineProperty(s, prop, {value: s[prop]})
-        else
-            degetterize(s[prop])
-    }
+    for(prop in s) degetterize(s[prop])
 }
 
 function defunctionize(s) {
