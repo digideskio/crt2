@@ -23,6 +23,7 @@ function wrapper(prop, fn) {
 }
 
 function memoize(dst, prop, fn) {
+    // TODO: Prevent multiple memoization.
     Object.defineProperty(dst, prop, {
         configurable: true,
         enumerable: true,
@@ -111,6 +112,7 @@ function expand(expr) {
     return res
 }
 
+// Remove this eventually, for efficiency sake.
 function degetterize(s) {
     if(typeof(s) !== 'object') return
     for(prop in s) degetterize(s[prop])
