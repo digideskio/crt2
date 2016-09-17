@@ -92,6 +92,17 @@ function expand(expr) {
     return res
 }
 
+function degetterize(s) {
+    if(typeof(s) !== 'object') return
+    for(prop in s) {
+        var desc = Object.getOwnPropertyDescriptor(s, prop);
+        if(desc.get !== undefined)
+            Object.defineProperty(s, prop, {value: s[prop]})
+        else
+            degetterize(s[prop])
+    }
+}
+
 function defunctionize(s) {
     if(typeof(s) !== 'object') return
     for(prop in s) {
@@ -104,6 +115,7 @@ function defunctionize(s) {
 
 function evaluate(expr) {
     var s = expand(expr)
+    degetterize(s)
     defunctionize(s)
     return s
 }
