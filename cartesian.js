@@ -15,8 +15,7 @@ function cut(s, predicate) {
     return {__cartesian__: 'cut', s: s, predicate: predicate}
 }
 
-
-function evaluate(expr) {
+function expand(expr) {
     function copy(dst, src) {
         for(var prop in src) {
             var desc = Object.getOwnPropertyDescriptor(src, prop)
@@ -28,8 +27,8 @@ function evaluate(expr) {
     // mix()
     if(expr.__cartesian__ === 'mix') {
         if(expr.arguments.length == 0) return [{}]
-        var head = evaluate(expr.arguments[0])
-        var tail = evaluate(mix.apply(this, expr.arguments.slice(1)))
+        var head = expand(expr.arguments[0])
+        var tail = expand(mix.apply(this, expr.arguments.slice(1)))
         var res = []
         for(var i = 0; i < head.length; i++) {
             for(var j = 0; j < tail.length; j++) {
@@ -45,14 +44,14 @@ function evaluate(expr) {
     if(expr.__cartesian__ === 'alt') {
         var res = []
         for(var i = 0; i < expr.arguments.length; i++) {
-            var s = evaluate(expr.arguments[i])
+            var s = expand(expr.arguments[i])
             for(var j = 0; j < s.length; j++) res.push(s[j])
         }
         return res
     }
     // cut()
     if(expr.__cartesian__ === 'cut') {
-        var s = evaluate(expr.s)
+        var s = expand(expr.s)
         var res = []
         for(key in s) if(!expr.predicate.apply(s[key])) res.push(s[key])
         return res
@@ -60,8 +59,8 @@ function evaluate(expr) {
     // array
     if(Array.isArray(expr)) {
         if(expr.length == 0) return [[]]
-        var head = evaluate(expr[0])
-        var tail = evaluate(expr.slice(1))
+        var head = expand(expr[0])
+        var tail = expand(expr.slice(1))
         var res = []
         for(var i = 0; i < head.length; i++) {
             for(var j =  0; j < tail.length; j++)
@@ -78,7 +77,7 @@ function evaluate(expr) {
                 Object.defineProperty(res[i], name, desc)
             continue;
         }
-        var s = evaluate(expr[name])
+        var s = expand(expr[name])
         var old = res
         res = []
         for(var i = 0; i < old.length; i++) {
@@ -91,6 +90,22 @@ function evaluate(expr) {
         }
     }
     return res
+}
+
+function defunctionize(s) {
+    if(typeof(s) !== 'object') return
+    for(prop in s) {
+        if(typeof(s[prop]) === "function")
+            delete s[prop]
+        else
+            defunctionize(s[prop])
+    }
+}
+
+function evaluate(expr) {
+    var s = expand(expr)
+    defunctionize(s)
+    return s
 }
 
 exports.alt = alt
