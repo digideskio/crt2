@@ -15,6 +15,11 @@ function cut(s, predicate) {
     return {__cartesian__: 'cut', s: s, predicate: predicate}
 }
 
+function sum(name) {
+    var value = arguments.length > 1 ? arguments[1] : 0
+    return {__cartesian__: 'sum', name: name, value: value}
+}
+
 function wrapper(prop, fn) {
     var val = fn.call(this)
     delete this[prop]
@@ -112,15 +117,45 @@ function expand(expr) {
     return res
 }
 
-// Remove this eventually, for efficiency sake.
-function degetterize(s) {
+function summarize() {
+    for(var i = 0; i < this.contributors.length; i++)
+        this.base += this.contributors[i]()
+    this.contributors = []
+    return this.base
+}
+
+function makegraph(s, env) {
     if(typeof(s) !== 'object') return
-    for(prop in s) degetterize(s[prop])
+    for(prop in s) {
+        var desc = Object.getOwnPropertyDescriptor(s, prop)
+        if(desc.get != undefined) continue
+        if(s[prop].__cartesian__ !== 'sum') {
+            makegraph(s[prop], env)
+            continue
+        }
+        var name = s[prop].name
+        var value = s[prop].value
+        // This evaluation happens before sums are fully computed!
+        if(typeof(name) === 'function') name = name.call(s)
+        // Create a global variable if it does not exist yet.
+        if(!(name in env)) env[name] = {base: 0, contributors: []}
+        if(typeof(value) === 'function')
+            env[name].contributors.push(value.bind(s))
+        else
+            env[name].base += value
+        delete s[prop]
+        Object.defineProperty(s, prop, {
+            enumerable: true,
+            get: summarize.bind(env[name])
+        })
+    }
 }
 
 function defunctionize(s) {
     if(typeof(s) !== 'object') return
     for(prop in s) {
+        var desc = Object.getOwnPropertyDescriptor(s, prop)
+        if(desc.get != undefined) continue
         if(typeof(s[prop]) === "function")
             delete s[prop]
         else
@@ -130,7 +165,7 @@ function defunctionize(s) {
 
 function evaluate(expr) {
     var s = expand(expr)
-    degetterize(s)
+    makegraph(s, {})
     defunctionize(s)
     return s
 }
@@ -138,5 +173,6 @@ function evaluate(expr) {
 exports.alt = alt
 exports.mix = mix
 exports.cut = cut
+exports.sum = sum
 exports.evaluate = evaluate
 
