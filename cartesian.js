@@ -21,8 +21,8 @@ function join() {
     return {__cartesian__: 'join', arguments: args}
 }
 
-function filter(s, predicate) {
-    return {__cartesian__: 'filter', s: s, predicate: predicate}
+function keep(s, predicate) {
+    return {__cartesian__: 'keep', s: s, predicate: predicate}
 }
 
 function cut(s, predicate) {
@@ -110,8 +110,8 @@ function expand(expr) {
             res = res.concat(expand(expr.arguments[i]))
         return res
     }
-    // filter()
-    if(expr.__cartesian__ === 'filter') {
+    // keep()
+    if(expr.__cartesian__ === 'keep') {
         var s = expand(expr.s)
         var res = []
         for(key in s) if(expr.predicate.apply(s[key])) res.push(s[key])
@@ -197,6 +197,10 @@ function makegraph(s, env) {
     }
 }
 
+/******************************************************************************/
+/*  Evaluation as such.                                                       */
+/******************************************************************************/
+
 function evaluate(expr) {
     var s = expand(expr)
     makegraph(s, {})
@@ -211,7 +215,7 @@ exports.alt = alt
 exports.mix = mix
 exports.sum = sum
 exports.join = join
-exports.filter = filter
+exports.keep = keep
 exports.cut = cut
 exports.evaluate = evaluate
 

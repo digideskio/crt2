@@ -2,6 +2,9 @@
 var c = require('./cartesian.js')
 var alt = c.alt
 var mix = c.mix
+var sum = c.sum
+var join = c.join
+var keep = c.keep
 var cut = c.cut
 var evaluate = c.evaluate
 
@@ -203,7 +206,7 @@ test(s,
   }\n\
 ]')
 
-// Test subset.
+// Test cut.
 s = cut(s, function() {return this.u1.a == this.u2.b})
 test(s,
 '[\n\
@@ -224,6 +227,142 @@ test(s,
       "b": 1\n\
     },\n\
     "c": 3\n\
+  }\n\
+]')
+
+// Test keep.
+s = keep({
+  a: alt(1, 2, 3),
+  b: alt(1, 2, 3)
+}, function() {return this.a == this.b})
+test(s,
+'[\n\
+  {\n\
+    "a": 1,\n\
+    "b": 1\n\
+  },\n\
+  {\n\
+    "a": 2,\n\
+    "b": 2\n\
+  },\n\
+  {\n\
+    "a": 3,\n\
+    "b": 3\n\
+  }\n\
+]')
+
+// Test join.
+s1 = {a: alt(1, 2, 3)}
+s2 = {b: alt(1, 2, 3)}
+s = join(s1, s2)
+test(s,
+'[\n\
+  {\n\
+    "a": 1\n\
+  },\n\
+  {\n\
+    "a": 2\n\
+  },\n\
+  {\n\
+    "a": 3\n\
+  },\n\
+  {\n\
+    "b": 1\n\
+  },\n\
+  {\n\
+    "b": 2\n\
+  },\n\
+  {\n\
+    "b": 3\n\
+  }\n\
+]')
+
+// Summing, simple test.
+s = {
+    a: alt(1, 2, 3),
+    b: sum('foo', 100)
+}
+test(s,
+'[\n\
+  {\n\
+    "a": 1,\n\
+    "b": 300\n\
+  },\n\
+  {\n\
+    "a": 2,\n\
+    "b": 300\n\
+  },\n\
+  {\n\
+    "a": 3,\n\
+    "b": 300\n\
+  }\n\
+]')
+
+// Summing, with function.
+s = {
+    a: alt(1, 2, 3),
+    b: sum('foo', function() {return this.a})
+}
+test(s,
+'[\n\
+  {\n\
+    "a": 1,\n\
+    "b": 6\n\
+  },\n\
+  {\n\
+    "a": 2,\n\
+    "b": 6\n\
+  },\n\
+  {\n\
+    "a": 3,\n\
+    "b": 6\n\
+  }\n\
+]')
+
+// Summing, computed name.
+s = {
+    a: alt(1, 2, 3),
+    b: sum(function() {return this.c}, 100),
+    c: 'foo'
+}
+test(s,
+'[\n\
+  {\n\
+    "a": 1,\n\
+    "c": "foo",\n\
+    "b": 300\n\
+  },\n\
+  {\n\
+    "a": 2,\n\
+    "c": "foo",\n\
+    "b": 300\n\
+  },\n\
+  {\n\
+    "a": 3,\n\
+    "c": "foo",\n\
+    "b": 300\n\
+  }\n\
+]')
+
+// Summing, among different kinds of objects.
+s1 = {
+  name: 's1',
+  s: sum('foo')
+}
+s2 = {
+  name: 's2',
+  s: sum('foo', 100)
+}
+s = join(s1, s2)
+test(s,
+'[\n\
+  {\n\
+    "name": "s1",\n\
+    "s": 100\n\
+  },\n\
+  {\n\
+    "name": "s2",\n\
+    "s": 100\n\
   }\n\
 ]')
 
