@@ -38,11 +38,17 @@ function wrapper(prop, fn) {
 }
 
 function memoize(dst, prop, fn) {
-    // TODO: Prevent multiple memoization.
+    if('__memoized__' in fn) {
+        var memofn = fn
+    }
+    else {
+        var memofn = wrapper.bind(dst, prop, fn)
+        memofn.__memoized__ = true
+    }
     Object.defineProperty(dst, prop, {
         configurable: true,
         enumerable: true,
-        get: wrapper.bind(dst, prop, fn)})
+        get: memofn})
 }
 
 function copy(dst, src) {
