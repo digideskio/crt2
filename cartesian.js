@@ -15,6 +15,12 @@ function cut(s, predicate) {
     return {__cartesian__: 'cut', s: s, predicate: predicate}
 }
 
+function join() {
+    var args = []
+    for(var i = 0; i < arguments.length; i++) args.push(arguments[i])
+    return {__cartesian__: 'join', arguments: args}
+}
+
 function sum(name) {
     var value = arguments.length > 1 ? arguments[1] : 0
     return {__cartesian__: 'sum', name: name, value: value}
@@ -79,6 +85,15 @@ function expand(expr) {
         var s = expand(expr.s)
         var res = []
         for(key in s) if(!expr.predicate.apply(s[key])) res.push(s[key])
+        return res
+    }
+    // join()
+    if(expr.__cartesian__ === 'join') {
+        var res = []
+        for(var i = 0; i < expr.arguments.length; i++) {
+            var s = expand(expr.arguments[i])
+            for(var j = 0; j < s.length; j++) res.push(s[j])
+        }
         return res
     }
     // array
@@ -172,7 +187,8 @@ function evaluate(expr) {
 
 exports.alt = alt
 exports.mix = mix
-exports.cut = cut
 exports.sum = sum
+exports.cut = cut
+exports.join = join
 exports.evaluate = evaluate
 
