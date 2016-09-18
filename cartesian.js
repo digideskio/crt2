@@ -168,10 +168,7 @@ function makegraph(s, env) {
         else
             env[name].base += value
         delete s[prop]
-        Object.defineProperty(s, prop, {
-            enumerable: true,
-            get: summarize.bind(env[name])
-        })
+        memoize(s, prop, summarize.bind(env[name]))
     }
 }
 
