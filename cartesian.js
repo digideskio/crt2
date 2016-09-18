@@ -1,4 +1,8 @@
 
+/******************************************************************************/
+/*  Functions to construct the syntax tree.                                   */
+/******************************************************************************/
+
 function alt() {
     var args = []
     for(var i = 0; i < arguments.length; i++) args.push(arguments[i])
@@ -30,6 +34,10 @@ function sum(name) {
     return {__cartesian__: 'sum', name: name, value: value}
 }
 
+/******************************************************************************/
+/*  Memoization helpers.                                                      */
+/******************************************************************************/
+
 function wrapper(prop, fn) {
     var val = fn.call(this)
     delete this[prop]
@@ -50,6 +58,11 @@ function memoize(dst, prop, fn) {
         enumerable: true,
         get: memofn})
 }
+
+/******************************************************************************/
+/*  Evaluation, step 1. The syntax tree is expanded to actual objects.        */
+/*  No user-defined getters or functions are evaluated during this phase.     */
+/******************************************************************************/
 
 function copy(dst, src) {
     for(var prop in src) {
@@ -147,6 +160,12 @@ function expand(expr) {
     return res
 }
 
+/******************************************************************************/
+/*  Evaluation, step 2. Sum statements are linked to summarization objects.   */
+/*  Some getters may be evaluated during this phase, specifically, those      */
+/*  that are needed to construct summarization identifiers.                   */
+/******************************************************************************/
+
 function summarize() {
     for(var i = 0; i < this.contributors.length; i++)
         this.base += this.contributors[i]()
@@ -178,24 +197,15 @@ function makegraph(s, env) {
     }
 }
 
-function defunctionize(s) {
-    if(typeof(s) !== 'object') return
-    for(prop in s) {
-        var desc = Object.getOwnPropertyDescriptor(s, prop)
-        if(desc.get != undefined) continue
-        if(typeof(s[prop]) === "function")
-            delete s[prop]
-        else
-            defunctionize(s[prop])
-    }
-}
-
 function evaluate(expr) {
     var s = expand(expr)
     makegraph(s, {})
-    defunctionize(s)
     return s
 }
+
+/******************************************************************************/
+/*  Exports.                                                                  */
+/******************************************************************************/
 
 exports.alt = alt
 exports.mix = mix
