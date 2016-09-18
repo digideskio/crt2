@@ -11,14 +11,18 @@ function mix() {
     return {__cartesian__: 'mix', arguments: args}
 }
 
-function cut(s, predicate) {
-    return {__cartesian__: 'cut', s: s, predicate: predicate}
-}
-
 function join() {
     var args = []
     for(var i = 0; i < arguments.length; i++) args.push(arguments[i])
     return {__cartesian__: 'join', arguments: args}
+}
+
+function filter(s, predicate) {
+    return {__cartesian__: 'filter', s: s, predicate: predicate}
+}
+
+function cut(s, predicate) {
+    return {__cartesian__: 'cut', s: s, predicate: predicate}
 }
 
 function sum(name) {
@@ -80,13 +84,6 @@ function expand(expr) {
         }
         return res
     }
-    // cut()
-    if(expr.__cartesian__ === 'cut') {
-        var s = expand(expr.s)
-        var res = []
-        for(key in s) if(!expr.predicate.apply(s[key])) res.push(s[key])
-        return res
-    }
     // join()
     if(expr.__cartesian__ === 'join') {
         var res = []
@@ -94,6 +91,20 @@ function expand(expr) {
             var s = expand(expr.arguments[i])
             for(var j = 0; j < s.length; j++) res.push(s[j])
         }
+        return res
+    }
+    // filter()
+    if(expr.__cartesian__ === 'filter') {
+        var s = expand(expr.s)
+        var res = []
+        for(key in s) if(expr.predicate.apply(s[key])) res.push(s[key])
+        return res
+    }
+    // cut()
+    if(expr.__cartesian__ === 'cut') {
+        var s = expand(expr.s)
+        var res = []
+        for(key in s) if(!expr.predicate.apply(s[key])) res.push(s[key])
         return res
     }
     // array
@@ -188,7 +199,8 @@ function evaluate(expr) {
 exports.alt = alt
 exports.mix = mix
 exports.sum = sum
-exports.cut = cut
 exports.join = join
+exports.filter = filter
+exports.cut = cut
 exports.evaluate = evaluate
 
