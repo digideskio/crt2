@@ -87,10 +87,8 @@ function expand(expr) {
     // join()
     if(expr.__cartesian__ === 'join') {
         var res = []
-        for(var i = 0; i < expr.arguments.length; i++) {
-            var s = expand(expr.arguments[i])
-            for(var j = 0; j < s.length; j++) res.push(s[j])
-        }
+        for(var i = 0; i < expr.arguments.length; i++)
+            res = res.concat(expand(expr.arguments[i]))
         return res
     }
     // filter()
