@@ -124,6 +124,10 @@ function expand(expr) {
         for(key in s) if(!expr.predicate.apply(s[key])) res.push(s[key])
         return res
     }
+    // Expressions that are not evaluated in step 1.
+    if(expr.__cartesian__ === 'sum') {
+        return [expr]
+    }
     // array
     if(Array.isArray(expr)) {
         if(expr.length == 0) return [[]]
