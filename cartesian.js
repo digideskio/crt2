@@ -30,8 +30,11 @@ function cut(s, predicate) {
 }
 
 function sum(name) {
-    var value = arguments.length > 1 ? arguments[1] : 0
-    return {__cartesian__: 'sum', name: name, value: value}
+    return {__cartesian__: 'sum', name: name}
+}
+
+function inc(name, value) {
+    return {__cartesian__: 'inc', name: name, value: value}
 }
 
 /******************************************************************************/
@@ -125,7 +128,7 @@ function expand(expr) {
         return res
     }
     // Expressions that are not evaluated in step 1.
-    if(expr.__cartesian__ === 'sum') {
+    if(expr.__cartesian__ in ['sum', 'inc']) {
         return [expr]
     }
     // array
@@ -182,22 +185,29 @@ function makegraph(s, env) {
     for(prop in s) {
         var desc = Object.getOwnPropertyDescriptor(s, prop)
         if(desc.get != undefined) continue
-        if(s[prop].__cartesian__ !== 'sum') {
+        if(s[prop].__cartesian__ !== 'sum' && s[prop].__cartesian__ !== 'inc') {
             makegraph(s[prop], env)
             continue
         }
         var name = s[prop].name
-        var value = s[prop].value
         // This evaluation happens before sums are fully computed!
         if(typeof(name) === 'function') name = name.call(s)
         // Create a global variable if it does not exist yet.
         if(!(name in env)) env[name] = {base: 0, contributors: []}
-        if(typeof(value) === 'function')
+        if(s[prop].__cartesian__ === 'sum') {
+            memoize(s, prop, summarize.bind(env[name]))
+            continue
+        }
+        // inc()
+        var value = s[prop].value
+        if(typeof(value) === 'function') {
             env[name].contributors.push(value.bind(s))
-        else
+            memoize(s, prop, value.bind(s))
+        }
+        else {
             env[name].base += value
-        delete s[prop]
-        memoize(s, prop, summarize.bind(env[name]))
+            s[prop] = value
+        }
     }
 }
 
@@ -218,6 +228,7 @@ function evaluate(expr) {
 exports.alt = alt
 exports.mix = mix
 exports.sum = sum
+exports.inc = inc
 exports.join = join
 exports.keep = keep
 exports.cut = cut

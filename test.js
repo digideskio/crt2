@@ -3,6 +3,7 @@ var c = require('./cartesian.js')
 var alt = c.alt
 var mix = c.mix
 var sum = c.sum
+var inc = c.inc
 var join = c.join
 var keep = c.keep
 var cut = c.cut
@@ -278,91 +279,90 @@ test(s,
 ]')
 
 // Summing, simple test.
-s = {
-    a: alt(1, 2, 3),
-    b: sum('foo', 100)
-}
-test(s,
-'[\n\
-  {\n\
-    "a": 1,\n\
-    "b": 300\n\
-  },\n\
-  {\n\
-    "a": 2,\n\
-    "b": 300\n\
-  },\n\
-  {\n\
-    "a": 3,\n\
-    "b": 300\n\
-  }\n\
-]')
-
-// Summing, with function.
-s = {
-    a: alt(1, 2, 3),
-    b: sum('foo', function() {return this.a})
-}
-test(s,
-'[\n\
-  {\n\
-    "a": 1,\n\
-    "b": 6\n\
-  },\n\
-  {\n\
-    "a": 2,\n\
-    "b": 6\n\
-  },\n\
-  {\n\
-    "a": 3,\n\
-    "b": 6\n\
-  }\n\
-]')
-
-// Summing, computed name.
-s = {
-    a: alt(1, 2, 3),
-    b: sum(function() {return this.c}, 100),
-    c: 'foo'
-}
-test(s,
-'[\n\
-  {\n\
-    "a": 1,\n\
-    "c": "foo",\n\
-    "b": 300\n\
-  },\n\
-  {\n\
-    "a": 2,\n\
-    "c": "foo",\n\
-    "b": 300\n\
-  },\n\
-  {\n\
-    "a": 3,\n\
-    "c": "foo",\n\
-    "b": 300\n\
-  }\n\
-]')
-
-// Summing, among different kinds of objects.
 s1 = {
-  name: 's1',
-  s: sum('foo')
+    a: alt(1, 2, 3),
+    b: inc('foo', 100)
 }
 s2 = {
-  name: 's2',
-  s: sum('foo', 100)
+    c: sum('foo')
 }
 s = join(s1, s2)
 test(s,
 '[\n\
   {\n\
-    "name": "s1",\n\
-    "s": 100\n\
+    "a": 1,\n\
+    "b": 100\n\
   },\n\
   {\n\
-    "name": "s2",\n\
-    "s": 100\n\
+    "a": 2,\n\
+    "b": 100\n\
+  },\n\
+  {\n\
+    "a": 3,\n\
+    "b": 100\n\
+  },\n\
+  {\n\
+    "c": 300\n\
+  }\n\
+]')
+
+// Summing, with function.
+s1 = {
+    a: alt(1, 2, 3),
+    b: inc('foo', function() {return this.a})
+}
+s2 = {
+    c: sum('foo')
+}
+s = join(s1, s2)
+test(s,
+'[\n\
+  {\n\
+    "a": 1,\n\
+    "b": 1\n\
+  },\n\
+  {\n\
+    "a": 2,\n\
+    "b": 2\n\
+  },\n\
+  {\n\
+    "a": 3,\n\
+    "b": 3\n\
+  },\n\
+  {\n\
+    "c": 6\n\
+  }\n\
+]')
+
+// Summing, computed name.
+s1 = {
+    a: alt(1, 2, 3),
+    b: inc(function() {return this.c}, 100),
+    c: 'foo'
+}
+s2 = {
+    c: sum(function() {return 'foo'})
+}
+s = join(s1, s2)
+test(s,
+'[\n\
+  {\n\
+    "a": 1,\n\
+    "b": 100,\n\
+    "c": "foo"\n\
+  },\n\
+  {\n\
+    "a": 2,\n\
+    "b": 100,\n\
+    "c": "foo"\n\
+  },\n\
+  {\n\
+    "a": 3,\n\
+    "b": 100,\n\
+    "c": "foo"\n\
+  },\n\
+  {\n\
+    "c": 300\n\
   }\n\
 ]')
 
